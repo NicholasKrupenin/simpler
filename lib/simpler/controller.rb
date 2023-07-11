@@ -12,7 +12,7 @@ module Simpler
 
     def make_response(action)
       @request.env['simpler.controller'] = self
-      @request.env['simpler.action'] = action
+      @request.env['simpler.action'] = action # example index
 
       set_default_headers
       send(action)
@@ -24,7 +24,7 @@ module Simpler
     private
 
     def extract_name
-      self.class.name.match('(?<name>.+)Controller')[:name].downcase
+      self.class.name.match('(?<name>.+)Controller')[:name].downcase # get name controller
     end
 
     def set_default_headers
