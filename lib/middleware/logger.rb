@@ -1,14 +1,6 @@
 require 'logger'
 
 class AppLogger
-  HTTP_CODE_STATUS = {
-    '200' => 'OK',
-    '404' => 'Not Found',
-    '429' => 'Resource',
-    '500' => 'Internal Server Error'
-    # etc
-  }.freeze
-
   def initialize(app, **options)
     @logger = Logger.new(options[:logdev], formatter: method(:log_struct))
     @app = app
@@ -35,18 +27,29 @@ class AppLogger
   end
 
   def hadler_logger
-    "#{@env['simpler.controller'].class}##{@env['simpler.action']}"
+    if @env['simpler.controller']
+      "#{@env['simpler.controller'].class}##{@env['simpler.action']}"
+    else
+      ''
+    end
   end
 
   def params_logger
-    @env['simpler.params']
+    if @env['simpler.request']
+      @env['simpler.request'].params
+    else
+      {}
+    end
   end
 
   def response_logger
-    status = @env['simpler.status']
-    headers = @env['simpler.headers']
-    template = @env['simpler.template']
+    response = @env['simpler.reponse'] || @env['simpler.error']
+    template = @env['simpler.template.status'] || @env['simpler.error'].body
 
-    #"#{status} [#{HTTP_CODE_STATUS[status.to_s]}] [#{headers["Content-Type"]}] [#{template}]"
+    status = response.status
+    headers = response.headers['Content-Type']
+    code_status = Rack::Utils::HTTP_STATUS_CODES[status]
+
+    "#{status} #{code_status} [#{headers}] #{template}"
   end
 end

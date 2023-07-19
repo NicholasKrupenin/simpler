@@ -12,7 +12,7 @@ module Simpler
 
     def make_response(action)
       @request.env['simpler.controller'] = self
-      @request.env['simpler.action'] = action # example index
+      @request.env['simpler.action'] = action
 
       set_default_headers
       send(action)
@@ -24,10 +24,8 @@ module Simpler
     private
 
     def make_log
-      @request.env['simpler.status'] = @response.status
-      @request.env['simpler.headers'] = @response.headers
-      @request.env['simpler.params'] = @request.params
-      @request.env['simpler.template'] = @request.env['simpler.template'] || @request.env['simpler.render.opions']
+      @request.env['simpler.request'] = @request
+      @request.env['simpler.reponse'] = @response
     end
 
     def extract_name
@@ -35,7 +33,7 @@ module Simpler
     end
 
     def set_default_headers
-      @response['ensureensureContent-Type'] = 'text/html'
+      @response['Content-Type'] = 'text/html'
     end
 
     def write_response
@@ -54,7 +52,7 @@ module Simpler
 
     def render(options)
       if options.is_a?(Hash)
-        @request.env['simpler.render.opions'] = options
+        @request.env['simpler.render.options'] = options
       else
         @request.env['simpler.template'] = options
       end

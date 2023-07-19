@@ -1,14 +1,14 @@
 module Simpler
   class Router
     class Route
-      attr_reader :controller, :action, :params
+      attr_reader :controller, :action, :params, :path
 
       def initialize(method, path, controller, action)
         @method = method
         @path = path_dispatch(path)
         @controller = controller
         @action = action
-        @params = []
+        @params = {}
       end
 
       def match?(method, path)
@@ -16,12 +16,11 @@ module Simpler
       end
 
       def extract_params(path)
-        @params = Array(path.match(@path)&.named_captures).first
+        @params = path.match(@path).named_captures.transform_keys(&:to_sym) || {}
       end
 
       def merge_params(controller)
-        k, v = *@params
-        controller.request.update_param(k.to_sym, v)
+        @params.each { |k, v| controller.request.update_param(k, v) }
       end
 
       private

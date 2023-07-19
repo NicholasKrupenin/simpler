@@ -23,35 +23,36 @@ module Simpler
     end
 
     def routes(&block)
-      @router.instance_eval(&block) # call block from routes.rb
+      @router.instance_eval(&block)
     end
 
     def call(env)
-      route = @router.route_for(env) # call route_for from router.rb
-    rescue NoMethodError => e
-      Rack::Response.new(e.message, 404).finish
-    else
-      controller = route.controller.new(env) # call controller from route.rb
-      route.merge_params(controller) # merge params from route.rb
+      @env = env
+      route = @router.route_for(env)
+      controller = route.controller.new(env)
+      route.merge_params(controller) if route.path.is_a?(Regexp)
       action = route.action
-      make_response(controller, action) # call make_response from controller.rb
+      make_response(controller, action)
+    rescue StandardError => e
+      error = Rack::Response.new("#{e.message}", 404, { 'Content-Type' => 'text/plain' })
+      @env['simpler.error'] = error
+      error.finish
     end
 
     private
 
     def require_app
-      Dir["#{Simpler.root}/app/**/*.rb"].each { |file| require file } # require each file from app folder
+      Dir["#{Simpler.root}/app/**/*.rb"].each { |file| require file }
     end
 
     def require_routes
-      require Simpler.root.join('config/routes') # require routes.rb ~/simpler/config/routes.rb
+      require Simpler.root.join('config/routes')
     end
 
     def setup_database
-      database_config = YAML.load_file(Simpler.root.join('config/database.yml')) # load database.yml
-      database_config['database'] = Simpler.root.join(database_config['database']) # set path to database
-                                                      # ~/simpler/#{database_config['database']}
-      @db = Sequel.connect(database_config) # connect to database with Sequel hash
+      database_config = YAML.load_file(Simpler.root.join('config/database.yml'))
+      database_config['database'] = Simpler.root.join(database_config['database'])
+      @db = Sequel.connect(database_config)
     end
 
     def make_response(controller, action)

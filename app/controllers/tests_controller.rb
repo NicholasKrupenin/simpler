@@ -1,7 +1,7 @@
 class TestsController < Simpler::Controller
   def index
     @time = Time.now
-    # header content_type: 'text/plain'
+    header content_type: 'text/example'
   end
 
   def create
