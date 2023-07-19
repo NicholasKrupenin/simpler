@@ -1,6 +1,7 @@
 require 'yaml'
 require 'singleton'
 require 'sequel'
+require 'pry'
 require_relative 'router'
 require_relative 'controller'
 
@@ -27,9 +28,12 @@ module Simpler
 
     def call(env)
       route = @router.route_for(env) # call route_for from router.rb
+    rescue NoMethodError => e
+      Rack::Response.new(e.message, 404).finish
+    else
       controller = route.controller.new(env) # call controller from route.rb
+      route.merge_params(controller) # merge params from route.rb
       action = route.action
-
       make_response(controller, action) # call make_response from controller.rb
     end
 

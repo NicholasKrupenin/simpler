@@ -9,12 +9,17 @@ module Simpler
     end
 
     def render(binding)
-      template = File.read(template_path)
-
+      template = render_option.nil? ? File.read(template_path) : another_template
       ERB.new(template).result(binding)
     end
 
     private
+
+    def another_template
+      if render_option[:plain]
+        render_option[:plain]
+      end
+    end
 
     def controller
       @env['simpler.controller']
@@ -26,6 +31,10 @@ module Simpler
 
     def template
       @env['simpler.template']
+    end
+
+    def render_option
+      @env['simpler.render.opions']
     end
 
     def template_path

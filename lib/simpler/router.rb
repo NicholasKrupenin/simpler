@@ -17,8 +17,10 @@ module Simpler
     def route_for(env)
       method = env['REQUEST_METHOD'].downcase.to_sym # get request method
       path = env['PATH_INFO'] # get path
-
-      @routes.find { |route| route.match?(method, path) } # find match route in route.rb (only one)
+      found_route = @routes.find { |route| route.match?(method, path) }# find match route in route.rb (only one)
+      raise NoMethodError, "No route for #{method} #{path}" unless found_route # raise error if route not found
+      found_route&.extract_params(path) # merge params from route.rb
+      found_route
     end
 
     private
