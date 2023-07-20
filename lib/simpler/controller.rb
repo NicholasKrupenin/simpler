@@ -2,7 +2,6 @@ require_relative 'view'
 
 module Simpler
   class Controller
-
     attr_reader :name, :request, :response
 
     def initialize(env)
@@ -18,14 +17,19 @@ module Simpler
       set_default_headers
       send(action)
       write_response
-
+      make_log
       @response.finish
     end
 
     private
 
+    def make_log
+      @request.env['simpler.request'] = @request
+      @request.env['simpler.reponse'] = @response
+    end
+
     def extract_name
-      self.class.name.match('(?<name>.+)Controller')[:name].downcase
+      self.class.name.match('(?<name>.+)Controller')[:name].downcase # get name controller
     end
 
     def set_default_headers
@@ -46,9 +50,25 @@ module Simpler
       @request.params
     end
 
-    def render(template)
-      @request.env['simpler.template'] = template
+    def render(options)
+      if options.is_a?(Hash)
+        @request.env['simpler.render.options'] = options
+      else
+        @request.env['simpler.template'] = options
+      end
     end
 
+    def status(code)
+      response.status = code
+    end
+
+    def header(options)
+      options.transform_keys!(&method(:conversion_name))
+      response.headers.merge!(options)
+    end
+
+    def conversion_name(name)
+      name.to_s.split('_').map(&:capitalize).join('-')
+    end
   end
 end

@@ -2,7 +2,6 @@ require_relative 'router/route'
 
 module Simpler
   class Router
-
     def initialize
       @routes = []
     end
@@ -18,8 +17,12 @@ module Simpler
     def route_for(env)
       method = env['REQUEST_METHOD'].downcase.to_sym
       path = env['PATH_INFO']
+      found_route = @routes.find { |route| route.match?(method, path) }
 
-      @routes.find { |route| route.match?(method, path) }
+      raise NoMethodError, "No route for #{method} #{path}" unless found_route
+
+      found_route.extract_params(path) if found_route.path.is_a?(Regexp)
+      found_route
     end
 
     private
@@ -36,6 +39,5 @@ module Simpler
     def controller_from_string(controller_name)
       Object.const_get("#{controller_name.capitalize}Controller")
     end
-
   end
 end
